@@ -1,0 +1,73 @@
+#Required Packages
+IscaretInstalled <- require("caret")
+if(!IscaretInstalled){
+    install.packages("caret")
+    library("caret")
+    }
+
+IsrandomForestInstalled <- require("randomForest")
+if(!IsrandomForestInstalled){
+    install.packages("randomForest")
+    library("randomForest")
+    }
+
+IsRpartInstalled <- require("rpart")        
+if(!IsRpartInstalled){
+    install.packages("rpart")
+    library("rpart")
+    }
+
+#Data Pre-Processing
+Load the data
+trainingUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"   
+testingUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv" 
+
+#Cleaning data 
+Load data to the memory.
+training <- read.csv(url(trainUrl), na.strings=c("NA",""))  
+testing <- read.csv(url(testUrl), na.strings=c("NA",""))
+
+Removing variables with zero variance
+training<-training[,colSums(is.na(training)) == 0]
+testing <-testing[,colSums(is.na(testing)) == 0]
+
+Remove columns that are not predictors, which are the the seven first columns
+training   <-training[,-c(1:7)]
+testing <-testing[,-c(1:7)]
+
+# The data after cleaning
+dim(training)
+
+#Cross-validation
+Splitting the dataset into 75% training and 25% test set
+Trainset <- createDataPartition(y=training$classe, p=0.75, list=FALSE)    
+NewTraining <- training[Trainset, ]
+NewTesting <- training[Trainset, ]  
+dim(NewTraining)
+dim(NewTesting) 
+
+#Prediction Models
+
+1. DECISION TREE
+Fit model on NewTraining data
+fitDecision <- rpart(classes ~ ., data=NewTraining, method="class")
+
+Use model to predict class in validation set 
+predictionDecision <- predict(fitDecision, NewTesting, type = "class")
+
+Confusion matrix
+confusionMatrix(NewTesting$classes, predictionDecision)
+
+2.RANDOM FOREST
+Fit model on NewTraining data
+fitRandom <- randomForest(classes ~ ., data=NewTraining, method="class")
+
+Use model to predict class in validation set 
+predictionRandom <- predict(fitRandom, NewTesting, type = "class")
+
+Confusion Matrix
+confusionMatrix(NewTesting$classes, predictionRandom)
+
+#Testing the model to predict 20 different test cases.
+predictALL <- predict(fitRandom, testing, type="class")
+predictALL
